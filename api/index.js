@@ -2,17 +2,10 @@ const https = require('https');
 const url = require('url');
 
 module.exports = (req, res) => {
-  const { pathname, query } = url.parse(req.url, true);
+  const { query } = url.parse(req.url, true);
 
-  // 1. Chuyển hướng đến GitHub để lấy Code
-  if (pathname === '/auth') {
-    const githubUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.OAUTH_CLIENT_ID}&scope=repo&state=${query.state}`;
-    res.writeHead(302, { Location: githubUrl });
-    return res.end();
-  }
-
-  // 2. Nhận Code từ GitHub và đổi lấy Token
-  if (pathname === '/callback') {
+  // 1. Nếu có chữ 'code' trên thanh địa chỉ -> Nhận mã từ GitHub về
+  if (query.code) {
     const postData = JSON.stringify({
       client_id: process.env.OAUTH_CLIENT_ID,
       client_secret: process.env.OAUTH_CLIENT_SECRET,
@@ -36,24 +29,22 @@ module.exports = (req, res) => {
         const content = `authorization:github:success:${JSON.stringify({ token, provider: 'github' })}`;
         
         res.setHeader('Content-Type', 'text/html');
-        res.end(`
-          <html><body><script>
-            (function() {
-              function receiveMessage(e) {
-                window.opener.postMessage("${content}", e.origin);
-              }
-              window.addEventListener("message", receiveMessage, false);
-              window.opener.postMessage("authorizing:github", "*");
-            })();
-          </script></body></html>
-        `);
+        res.end(`<html><body><script>
+          (function() {
+            function receiveMessage(e) { window.opener.postMessage("${content}", e.origin); }
+            window.addEventListener("message", receiveMessage, false);
+            window.opener.postMessage("authorizing:github", "*");
+          })();
+        </script></body></html>`);
       });
     });
-
     request.write(postData);
     request.end();
     return;
   }
 
-  res.end('Auth Server is running!');
+  // 2. Chuyển thẳng sang trang Đăng nhập của GitHub
+  const githubUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.OAUTH_CLIENT_ID}&scope=repo&state=${query.state || 'random-state'}`;
+  res.writeHead(302, { Location: githubUrl });
+  res.end();
 };
