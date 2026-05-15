@@ -1,5 +1,5 @@
 {
-  "dependencies": {
-    "netlify-cms-proxy-auth": "^1.1.0"
-  }
+  "name": "khanhbox-auth",
+  "version": "1.0.0",
+  "dependencies": {}
 }
