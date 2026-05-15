@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "simple-gatekeeper": "^1.0.1"
+    "netlify-cms-proxy-auth": "^1.1.0"
   }
 }
